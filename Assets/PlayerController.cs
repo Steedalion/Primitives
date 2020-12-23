@@ -34,4 +34,14 @@ public class PlayerController : MonoBehaviour
 		
 		rb.AddForce(movement * moveForce);
 	}
+	// This function is called when the object becomes enabled and active.
+	protected void OnEnable()
+	{
+		input.Enable();
+	}
+	// This function is called when the behaviour becomes disabled () or inactive.
+	protected void OnDisable()
+	{
+		input.Disable();
+	}
 }
