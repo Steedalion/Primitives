@@ -10,38 +10,54 @@ public class PlayerController : MonoBehaviour
 	public float jumpingForce;
 	public float moveForce;
 	public float limitZ;
-	Transform _transform;
-	bool isOnGround;
+	bool isGrounded;
+	Vector3 moveDirection;
+	bool hasPowerup = false;
+	Vector3 powerupOffset;
+	public GameObject powerupIndicator;
     // Start is called before the first frame update
 	void Awake()
 	{
-		_transform = transform;
 		rb = GetComponent<Rigidbody>();
 		input = new InputControl();
 		input.Player.Jump.performed += x =>Jump();
 		input.Player.Move.performed += axis => Move(axis.ReadValue<Vector2>());
-        
-    }
+		input.Player.Move.canceled += axis => moveDirection = Vector3.zero;
+	}
+	// Start is called on the frame when a script is enabled just before any of the Update methods is called the first time.
+	protected IEnumerator Start()
+	{
+		powerupOffset = powerupIndicator.transform.position - transform.position;
+		powerupIndicator.SetActive(false);
+		
+		yield return null;
+	}
 
     // Update is called once per frame
     void Update()
-    {
+	{
+		rb.AddForce(moveDirection * moveForce * Time.deltaTime);
 	    if(transform.position.z > limitZ)
 	    {
 		     	transform.position = new Vector3(transform.position.x, transform.position.y, limitZ);
 	    }
+		if (hasPowerup)
+		{
+			powerupIndicator.transform.position = transform.position + powerupOffset;
+		}
     }
 	void Jump()
 	{
 		Debug.Log("Jump");
-		if(isOnGround){
+		if(isGrounded){
 			rb.AddForce(Vector3.up * jumpingForce);}
 	}
 	void Move(Vector2 movement)
 	{
-		Vector3 move3 = new Vector3(movement.x,0, movement.y);
+		Debug.Log("Move");
+		moveDirection = new Vector3(movement.x,0, movement.y);
 		
-		rb.AddForce(move3 * moveForce);
+		
 		
 	}
 	// OnCollisionEnter is called when this collider/rigidbody has begun touching another rigidbody/collider.
@@ -49,7 +65,11 @@ public class PlayerController : MonoBehaviour
 	{
 		if(collisionInfo.other.CompareTag("Ground"))
 		{
-			isOnGround = true;
+			isGrounded = true;
+		}
+		if (hasPowerup && collisionInfo.other.CompareTag("Obstacle"))
+		{
+			Destroy(collisionInfo.other.gameObject);
 		}
 		yield return null;
 	}
@@ -57,11 +77,31 @@ public class PlayerController : MonoBehaviour
 	
 	// OnCollisionExit is called when this collider/rigidbody has stopped touching another rigidbody/collider.
 	protected IEnumerator OnCollisionExit(Collision collisionInfo)
-	{if(collisionInfo.other.CompareTag("Ground"))
 	{
-		isOnGround = false;
-	}
+		if(collisionInfo.other.CompareTag("Ground"))
+		{
+			isGrounded = false;
+		}
 		yield return null;
+	}
+	// OnTriggerEnter is called when the Collider other enters the trigger.
+	protected IEnumerator OnTriggerEnter(Collider other)
+	{
+		if(other.CompareTag("Powerup"))
+		{
+			Destroy(other.gameObject);
+			StartCoroutine(GetPowerup());
+		}
+		yield return null;
+	}
+	
+	IEnumerator GetPowerup()
+	{
+		hasPowerup = true;
+		powerupIndicator.SetActive(true);
+		yield return new WaitForSeconds(5f);
+		powerupIndicator.SetActive(false);
+		hasPowerup = false;
 	}
 	// This function is called when the object becomes enabled and active.
 	protected void OnEnable()
