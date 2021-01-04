@@ -10,11 +10,17 @@ public class PlayerController : MonoBehaviour
 	public float jumpingForce;
 	public float moveForce;
 	public float limitZ;
+	public float limitX;
 	bool isGrounded;
 	Vector3 moveDirection;
 	bool hasPowerup = false;
 	Vector3 powerupOffset;
+	
 	public GameObject powerupIndicator;
+	public AudioClip jumpSound;
+	public AudioClip powerupCollisionSound;
+	public ParticleSystem powerupCollisionParticle;
+	public ParticleSystem runningParticle;
     // Start is called before the first frame update
 	void Awake()
 	{
@@ -36,11 +42,16 @@ public class PlayerController : MonoBehaviour
     // Update is called once per frame
     void Update()
 	{
-		rb.AddForce(moveDirection * moveForce * Time.deltaTime);
+		transform.Translate(moveDirection * moveForce * Time.deltaTime);
 	    if(transform.position.z > limitZ)
 	    {
 		     	transform.position = new Vector3(transform.position.x, transform.position.y, limitZ);
 	    }
+		if(Mathf.Abs(transform.position.x) > limitX)
+		{
+			float x = limitX * Mathf.Sign(transform.position.x);
+			transform.position = new Vector3(x, transform.position.y, transform.position.z);
+		}
 		if (hasPowerup)
 		{
 			powerupIndicator.transform.position = transform.position + powerupOffset;
@@ -50,6 +61,7 @@ public class PlayerController : MonoBehaviour
 	{
 		Debug.Log("Jump");
 		if(isGrounded){
+			AudioSource.PlayClipAtPoint(jumpSound, transform.position);
 			rb.AddForce(Vector3.up * jumpingForce);}
 	}
 	void Move(Vector2 movement)
@@ -70,6 +82,9 @@ public class PlayerController : MonoBehaviour
 		if (hasPowerup && collisionInfo.other.CompareTag("Obstacle"))
 		{
 			Destroy(collisionInfo.other.gameObject);
+			AudioSource.PlayClipAtPoint(powerupCollisionSound, transform.position);
+			powerupCollisionParticle.Play();
+			powerupCollisionParticle.transform.position = collisionInfo.other.transform.position;
 		}
 		yield return null;
 	}

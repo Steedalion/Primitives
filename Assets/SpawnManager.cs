@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class SpawnManager : MonoBehaviour
 {
-	public GameObject obstaclePrefab;
+	public GameObject[] obstaclePrefabs;
 	public GameObject powerupPrefab;
 	public float xmin, xmax;
 	float delay = 2f;
@@ -13,7 +13,7 @@ public class SpawnManager : MonoBehaviour
     void Start()
     {
 	    wait = new WaitForSeconds(delay);
-	    StartCoroutine(SpawnObstacles(5));
+	    StartCoroutine(SpawnObstacles(100));
 	    StartCoroutine(SpawnPowerup(5));
     }
 
@@ -27,7 +27,7 @@ public class SpawnManager : MonoBehaviour
 	IEnumerator SpawnObstacles( int number)
 	{
 		for (int i = 0; i < number; i++) {
-			Instantiate(obstaclePrefab, RandomSpawnPosition(), Quaternion.identity);
+			Instantiate(obstaclePrefabs[Random.Range(0, obstaclePrefabs.Length)], RandomSpawnPosition(), Quaternion.identity);
 			yield return wait;
 		}
 		
